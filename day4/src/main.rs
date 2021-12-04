@@ -38,7 +38,8 @@ fn part1(input: &Input) -> usize {
 fn part2(input: &Input) -> usize {
     let mut checked: Vec<CheckMap> = vec![ [[false; 5]; 5]; input.fields.len()];
     let mut has_won: Vec<bool> = vec![false; input.fields.len()];
-    let mut last_score: usize = 0;
+    let mut last_winner: usize = 0;
+    let mut last_win_draw: usize = 0;
 
     for draw in input.draw_nums.iter() {
         for (i, field) in input.fields.iter().enumerate() {
@@ -49,14 +50,15 @@ fn part2(input: &Input) -> usize {
                     checked[i][*x][*y] = true;
                     if test_for_win(&checked[i]) { 
                         has_won[i] = true;
-                        last_score = *draw * calc_score(field, &checked[i]) 
+                        last_winner = i;
+                        last_win_draw = draw;
                     }
                 }
                 None => {}
             }
         }
     }
-    last_score
+    last_win_draw * calc_score(fields[i], checked[i])
 }
 
 fn test_for_win(checkmap: &CheckMap) -> bool {
