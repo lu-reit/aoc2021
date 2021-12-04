@@ -1,9 +1,11 @@
 use std::env;
 use std::fs;
 use std::collections::HashMap;
+use std::time::Instant;
+
 
 type Field = HashMap<usize, (usize, usize)>;
-type CheckMap = [[bool; 5]; 5];
+type CheckMap = [usize; 5];
 
 struct Input {
     draw_nums: Vec<usize>,
@@ -11,19 +13,31 @@ struct Input {
 }
 
 fn main() {
+    let input_timer = Instant::now();
     let input = read_input(); 
-    println!("Solution of part1: {}", part1(&input));
-    println!("Solution of part2: {}", part2(&input));
+    println!("Elapsed time for parsing: {:?}", input_timer.elapsed());
+
+    let p1_timer = Instant::now();
+    let p1_sol = part1(&input);
+    let p1_time = p1_timer.elapsed();
+    println!("Solution of part1: {}", p1_sol);
+    println!("Elapsed time for part 1: {:?}", p1_time);
+
+    let p2_timer = Instant::now();
+    let p2_sol = part2(&input);
+    let p2_time = p2_timer.elapsed();
+    println!("Solution of part2: {}", p2_sol);
+    println!("Elapsed time for part 2: {:?}", p2_time);
 }
 
 fn part1(input: &Input) -> usize {
-    let mut checked: Vec<CheckMap> = vec![ [[false; 5]; 5]; input.fields.len()];
+    let mut checked: Vec<CheckMap> = vec![[0; 5]; input.fields.len()];
 
     for draw in input.draw_nums.iter() {
         for (i, field) in input.fields.iter().enumerate() {
             match field.get(draw) {
                 Some((x, y)) => {
-                    checked[i][*x][*y] = true;
+                    checked[i][*y] ^= 1 << x;
                     if test_for_win(&checked[i]) { 
                         return *draw * calc_score(field, &checked[i]) 
                     }
@@ -36,7 +50,7 @@ fn part1(input: &Input) -> usize {
 }
 
 fn part2(input: &Input) -> usize {
-    let mut checked: Vec<CheckMap> = vec![ [[false; 5]; 5]; input.fields.len()];
+    let mut checked: Vec<CheckMap> = vec![ [0; 5]; input.fields.len()];
     let mut has_won: Vec<bool> = vec![false; input.fields.len()];
     let mut last_winner: usize = 0;
     let mut last_win_draw: usize = 0;
@@ -47,37 +61,31 @@ fn part2(input: &Input) -> usize {
 
             match field.get(draw) {
                 Some((x, y)) => {
-                    checked[i][*x][*y] = true;
+                    checked[i][*y] ^= 1 << x;
                     if test_for_win(&checked[i]) { 
                         has_won[i] = true;
                         last_winner = i;
-                        last_win_draw = draw;
+                        last_win_draw = *draw;
                     }
                 }
                 None => {}
             }
         }
     }
-    last_win_draw * calc_score(fields[i], checked[i])
+    last_win_draw * calc_score(&input.fields[last_winner], &checked[last_winner])
 }
 
 fn test_for_win(checkmap: &CheckMap) -> bool {
     // First test the rows
-    if checkmap.iter().any(|row| *row == [true, true, true, true, true]) { return true }
+    if checkmap.iter().any(|row| *row == 0b11111) { return true }
 
     // Next the columns
-    'outer: for i in 0..5 {
-        for j in 0..5 {
-            if !checkmap[j][i] { continue 'outer }
-        }
-        return true;
-    }
-    return false;
+    checkmap.iter().fold(0b11111, |sum, row| sum & row) > 0
 }
 
 fn calc_score(field: &Field, checkmap: &CheckMap) -> usize {
     field.iter().fold(0, |sum, (num, (x, y))| 
-        if !checkmap[*x][*y] { sum + num } else { sum })
+        if checkmap[*y] & (1 << x) == 0 { sum + num } else { sum })
 }
     
 fn read_input() -> Input {
