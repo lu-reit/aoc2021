@@ -1,8 +1,6 @@
 use std::env;
 use std::fs::File;
-use std::cmp::{min, max};
 use std::io::{BufRead, BufReader};
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 // Using Vec instead of fixed sized arrays for simplicity
@@ -31,7 +29,6 @@ pub fn part2(input: &[SegDisplay]) -> usize {
     for display in input.iter() {
         sum += decode(display);
     }
-    
     sum
 }
 
